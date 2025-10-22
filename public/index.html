@@ -146,7 +146,7 @@
         datasets: [
           {
             data: [],
-            backgroundColor: ["#ffcd56", "#ff6384", "#36a2eb", "#fd6b19"],
+            backgroundColor: [], // will be filled from API color field
           },
         ],
         labels: [],
@@ -176,10 +176,11 @@
           .append("g")
           .attr("transform", `translate(${width / 2},${height / 2})`);
 
+        // Use the provided color field from the data (hex colors)
         const color = d3
           .scaleOrdinal()
           .domain(data.map((d) => d.title))
-          .range(d3.schemeCategory10);
+          .range(data.map(d => d.color));
 
         const pie = d3.pie().value((d) => d.budget);
 
@@ -201,9 +202,11 @@
 
       function getBudget() {
         axios.get("http://localhost:3000/budget").then(function (res) {
+          // Populate Chart.js data and use value/color fields from API
           for (var i = 0; i < res.data.myBudget.length; i++) {
             dataSource.datasets[0].data[i] = res.data.myBudget[i].budget;
             dataSource.labels[i] = res.data.myBudget[i].title;
+            dataSource.datasets[0].backgroundColor[i] = res.data.myBudget[i].color || '#cccccc';
           }
           createChart();
           createD3Chart(res.data.myBudget);

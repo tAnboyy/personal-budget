@@ -1,24 +1,49 @@
-// Budget API
+// Budget API (MongoDB + Mongoose)
 
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const path = require('path');
+const BudgetItem = require('./models/BudgetItem');
+
 const app = express();
-const port = 3000;
-const fs = require('fs');
+const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json());
 
-app.use('/', express.static('public'));
+// Serve static frontend
+app.use('/', express.static(path.join(__dirname, 'public')));
 
-app.get('/budget', (req, res) => {
-    fs.readFile('budget.json', 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading file:', err);
-            return res.status(500).json({ error: 'Error reading budget data' });
-        }
-        const budget = JSON.parse(data);
-        res.json(budget);
-    });
+// MongoDB connection
+const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/personal_budget';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
+
+// GET /budget - return all budget items
+app.get('/budget', async (req, res) => {
+    try {
+        const items = await BudgetItem.find().lean();
+        // Returning in same shape as previous frontend expects
+        res.json({ myBudget: items.map(i => ({ title: i.title, budget: i.value, color: i.color })) });
+    } catch (err) {
+        console.error('Error fetching budget items:', err);
+        res.status(500).json({ error: 'Error fetching budget data' });
+    }
+});
+
+// POST /budget - add new budget item
+app.post('/budget', async (req, res) => {
+    try {
+        const { title, value, color } = req.body;
+        const item = new BudgetItem({ title, value, color });
+        await item.save();
+        res.status(201).json(item);
+    } catch (err) {
+        console.error('Error saving budget item:', err);
+        res.status(400).json({ error: err.message });
+    }
 });
 
 app.listen(port, () => {

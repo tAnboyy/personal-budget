@@ -107,3 +107,19 @@ main article {
         margin: 10px;
     }
 }
+
+#d3Chart {
+    width: 400px;
+    height: 400px;
+    margin: 0 auto;
+}
+
+#d3Chart svg {
+    display: block;
+    margin: 0 auto;
+}
+
+#d3Chart text {
+    font-size: 12px;
+    fill: white;
+}
